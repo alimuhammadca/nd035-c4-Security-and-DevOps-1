@@ -36,7 +36,7 @@ public class CartControllerTests {
     @Test
     public void testAddToCart() {
         ModifyCartRequest cartRequest = createCartRequest();
-        final ResponseEntity<Cart> response = cartController.addTocart(cartRequest);
+        final ResponseEntity<Cart> response = cartController.addToCart(cartRequest);
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
         Cart cart = response.getBody();
@@ -47,7 +47,7 @@ public class CartControllerTests {
     @Test
     public void testRemoveFromCart() {
         ModifyCartRequest cartRequest = createCartRequest();
-        final ResponseEntity<Cart> response = cartController.removeFromcart(cartRequest);
+        final ResponseEntity<Cart> response = cartController.removeFromCart(cartRequest);
 
         assertNotNull(response);
         assertEquals(200, response.getStatusCodeValue());
