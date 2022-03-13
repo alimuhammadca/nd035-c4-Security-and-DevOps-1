@@ -43,19 +43,6 @@ public class UserController {
 		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
 	}
 
-/*
-	@PostMapping("/create")
-	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
-		User user = new User();
-		user.setUsername(createUserRequest.getUsername());
-		Cart cart = new Cart();
-		cartRepository.save(cart);
-		user.setCart(cart);
-		userRepository.save(user);
-		return ResponseEntity.ok(user);
-	}
-*/
-
 	@PostMapping("/create")
 	public ResponseEntity<User> createUser(@RequestBody CreateUserRequest createUserRequest) {
 		if (createUserRequest.getPassword().length() < 7 ||
@@ -65,13 +52,10 @@ public class UserController {
 		}
 		User user = new User();
 		user.setUsername(createUserRequest.getUsername());
-		//String salt = Util.createSalt().toString();
-		//user.setSalt(salt);
 		Cart cart = new Cart();
 		cartRepository.save(cart);
 		user.setCart(cart);
 		user.setPassword(bCryptPasswordEncoder.encode(createUserRequest.getPassword()));
-		//user.setPassword(Util.getSecurePassword(createUserRequest.getPassword(), salt.getBytes()));
 		userRepository.save(user);
 		return ResponseEntity.ok(user);
 	}
