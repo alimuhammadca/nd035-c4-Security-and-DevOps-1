@@ -120,13 +120,13 @@ public class UserContollerTests {
         final ResponseEntity<User> response = userController.createUser(userRequest);
         return response;
     }
-
+/*
     @Test
     public void testFindByIdFailed() {
         final ResponseEntity<User> response = userController.findById(0l);
         assertEquals(404, response.getStatusCodeValue());
     }
-
+*/
     @Test
     public void testFindByUserNameFailed() {
         final ResponseEntity<User> response = userController.findByUserName("something");
