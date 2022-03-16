@@ -1,135 +1,156 @@
 package com.example.demo.controllers;
 
-import com.example.demo.TestUtils;
-import com.example.demo.model.persistence.User;
-import com.example.demo.model.persistence.repositories.CartRepository;
-import com.example.demo.model.persistence.repositories.UserRepository;
-import com.example.demo.model.requests.CreateUserRequest;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.http.ResponseEntity;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import java.util.Optional;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.junit.jupiter.api.BeforeAll;
+
+import java.util.HashMap;
+import java.util.Map;
+import static io.restassured.RestAssured.given;
+import static io.restassured.config.EncoderConfig.encoderConfig;
+import static org.hamcrest.Matchers.is;
 
 public class UserContollerTests {
 
-    private UserController userController;
+    @BeforeClass
+    public static void setUp() {
+        Map<String, Object> map = new HashMap();
+        map.put("username", "test");
+        map.put("password", "testPassword");
+        map.put("confirmPassword", "testPassword");
 
-    private UserRepository userRepository = mock(UserRepository.class);
-    private CartRepository cartRepository = mock(CartRepository.class);
-    private BCryptPasswordEncoder bCryptPasswordEncoder = mock(BCryptPasswordEncoder.class);
-
-    @Before
-    public void setUp() {
-        userController = new UserController();
-        TestUtils.injectObject(userController, "userRepository", userRepository);
-        TestUtils.injectObject(userController, "cartRepository", cartRepository);
-        TestUtils.injectObject(userController, "bCryptPasswordEncoder", bCryptPasswordEncoder);
+        given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8081/api/user/create").
+                then().
+                statusCode(200).
+                assertThat().
+                body("username", is("test")).assertThat().body("id", is(1));
     }
 
     @Test
-    public void createUserSuccessful() throws Exception {
-        when(bCryptPasswordEncoder.encode("testPassword")).thenReturn("ThisIsHashed");
-        CreateUserRequest createUserRequest = new CreateUserRequest();
-        createUserRequest.setUsername("test");
-        createUserRequest.setPassword("testPassword");
-        createUserRequest.setConfirmPassword("testPassword");
+    public void testCreateUserFailed() {
+        Map<String, Object> map = new HashMap();
+        map.put("username", "test1");
+        map.put("password", "testPassword");
+        map.put("confirmPassword", "testPassword1");
 
-        ResponseEntity<User> responseEntity = userController.createUser(createUserRequest);
-
-        assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
-
-        User user = responseEntity.getBody();
-        assertNotNull(user);
-        assertEquals(0, user.getId());
-        assertEquals("test", user.getUsername());
-        assertEquals("ThisIsHashed", user.getPassword());
-
+        given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8081/api/user/create").
+                then().
+                statusCode(400);
     }
 
     @Test
-    public void createUserFailed() {
-        when(bCryptPasswordEncoder.encode("testPassword")).thenReturn("ThisIsHashed");
-        CreateUserRequest createUserRequest = new CreateUserRequest();
-        createUserRequest.setUsername("test");
-        createUserRequest.setPassword("testPassword");
-        createUserRequest.setConfirmPassword("testtest");
+    public void testCreateUserSuccessfully() {
+        Map<String, Object> map = new HashMap();
+        map.put("username", "test2");
+        map.put("password", "testPassword");
+        map.put("confirmPassword", "testPassword");
+        given().
 
-        final ResponseEntity<User> responseEntity = userController.createUser(createUserRequest);
-
-        assertNotNull(responseEntity);
-        assertEquals(400, responseEntity.getStatusCodeValue());
+        config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+        when().
+        post("http://localhost:8081/api/user/create").
+        then().
+        statusCode(200).
+        assertThat().
+        body("username", is("test2")).assertThat().body("id", is(2));
     }
 
     @Test
-    public void testFindUserById() throws Exception {
-        final ResponseEntity<User> responseEntity = createTestUser();
-        assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+    public void testLoginSuccessfully() {
+        Map<String, Object> map = new HashMap();
+        map.put("username", "test");
+        map.put("password", "testPassword");
 
-        User user = responseEntity.getBody();
-        assertNotNull(user);
-        assertEquals(0, user.getId());
-        assertEquals("test", user.getUsername());
-        assertEquals("ThisIsHashed", user.getPassword());
+        given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8081/login").then().statusCode(200);
+    }
 
+    public String login() {
+        Map<String, Object> map = new HashMap();
+        map.put("username", "test");
+        map.put("password", "testPassword");
 
-        when(userRepository.findById(user.getId())).thenReturn(Optional.of(user));
-        final ResponseEntity<User> response = userController.findById(user.getId());
-        User userFound = response.getBody();
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(0, userFound.getId());
-        assertEquals("test", userFound.getUsername());
-        assertEquals("ThisIsHashed", userFound.getPassword());
+        Response response = given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8081/login");
+        String authorizationCode = response.headers().get("Authorization").getValue();
+        return authorizationCode;
     }
 
     @Test
-    public void testFindUserByUserName() throws Exception {
-        final ResponseEntity<User> responseEntity = createTestUser();
-        assertNotNull(responseEntity);
-        assertEquals(200, responseEntity.getStatusCodeValue());
+    public void testFindUserByIdSuccessfully() {
 
-        User user = responseEntity.getBody();
-        assertNotNull(user);
-        assertEquals(0, user.getId());
-        assertEquals("test", user.getUsername());
-        assertEquals("ThisIsHashed", user.getPassword());
+        String code = login();
 
-
-        when(userRepository.findByUsername(user.getUsername())).thenReturn(user);
-        final ResponseEntity<User> response = userController.findByUserName(user.getUsername());
-        User userFound = response.getBody();
-        assertEquals(200, response.getStatusCodeValue());
-        assertEquals(0, userFound.getId());
-        assertEquals("test", userFound.getUsername());
-        assertEquals("ThisIsHashed", userFound.getPassword());
+        given().
+                header("Authorization", code).
+                pathParam("id", "1").
+                contentType("application/JSON").
+                when().
+                get("http://localhost:8081/api/user/id/{id}").
+                then().
+                statusCode(200).
+                assertThat().
+                body("username", is("test")).assertThat().body("id", is(1));
     }
 
-    public ResponseEntity<User> createTestUser() {
-        when(bCryptPasswordEncoder.encode("testPassword")).thenReturn("ThisIsHashed");
-        CreateUserRequest userRequest = new CreateUserRequest();
-        userRequest.setUsername("test");
-        userRequest.setPassword("testPassword");
-        userRequest.setConfirmPassword("testPassword");
-
-        final ResponseEntity<User> response = userController.createUser(userRequest);
-        return response;
-    }
-/*
     @Test
-    public void testFindByIdFailed() {
-        final ResponseEntity<User> response = userController.findById(0l);
-        assertEquals(404, response.getStatusCodeValue());
+    public void testFindUserByIdFailed() {
+
+        String code = login();
+
+        given().
+                header("Authorization", code).
+                pathParam("id", "100").
+                contentType("application/JSON").
+                when().
+                get("http://localhost:8081/api/user/id/{id}").
+                then().
+                statusCode(404);
     }
-*/
+
     @Test
-    public void testFindByUserNameFailed() {
-        final ResponseEntity<User> response = userController.findByUserName("something");
-        assertEquals(404, response.getStatusCodeValue());
+    public void testFindUserByUserNameSuccessfully() {
+
+        String code = login();
+
+        given().
+                header("Authorization", code).
+                pathParam("username", "test").
+                contentType("application/JSON").
+                when().
+                get("http://localhost:8081/api/user/{username}").
+                then().
+                statusCode(200).
+                assertThat().
+                body("username", is("test")).assertThat().body("id", is(1));
+    }
+
+    @Test
+    public void testFindUserByUserNameFailed() {
+
+        String code = login();
+
+        given().
+                header("Authorization", code).
+                pathParam("username", "test1").
+                contentType("application/JSON").
+                when().
+                get("http://localhost:8081/api/user/{username}").
+                then().
+                statusCode(404);
     }
 }

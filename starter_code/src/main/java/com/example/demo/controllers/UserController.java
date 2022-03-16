@@ -36,24 +36,24 @@ public class UserController {
 
 	@GetMapping("/id/{id}")
 	public ResponseEntity<User> findById(@PathVariable Long id) {
-		User user = userRepository.findById(id).get();
-		if (user != null) {
-			log.info("INFO: user found : "+ user.getUsername());
+		Optional<User> optionalUser = userRepository.findById(id);
+		if (optionalUser.isPresent()) {
+			log.info("INFO: user found : "+ optionalUser.get().getUsername());
 
 		} else {
 			log.error("ERROR: No user found with ID: "+ id);
 		}
-		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
+		return !optionalUser.isPresent() ? ResponseEntity.notFound().build() : ResponseEntity.ok(optionalUser.get());
 	}
 	
 	@GetMapping("/{username}")
 	public ResponseEntity<User> findByUserName(@PathVariable String username) {
 		User user = userRepository.findByUsername(username);
 		if (user != null) {
-			log.info("INFO: user found : "+username);
+			log.info("INFO: user found : " + username);
 
 		} else {
-			log.error("ERROR: No user found with username: "+username);
+			log.error("ERROR: No user found with username: " + username);
 		}
 		return user == null ? ResponseEntity.notFound().build() : ResponseEntity.ok(user);
 	}
