@@ -3,16 +3,14 @@ package com.example.demo.controllers;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.junit.jupiter.api.BeforeAll;
-
 import java.util.HashMap;
 import java.util.Map;
 import static io.restassured.RestAssured.given;
 import static io.restassured.config.EncoderConfig.encoderConfig;
 import static org.hamcrest.Matchers.is;
+
 
 public class UserContollerTests {
 
@@ -26,7 +24,7 @@ public class UserContollerTests {
         given().
                 config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
                 when().
-                post("http://localhost:8081/api/user/create").
+                post("http://localhost:8080/api/user/create").
                 then().
                 statusCode(200).
                 assertThat().
@@ -43,7 +41,7 @@ public class UserContollerTests {
         given().
                 config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
                 when().
-                post("http://localhost:8081/api/user/create").
+                post("http://localhost:8080/api/user/create").
                 then().
                 statusCode(400);
     }
@@ -58,7 +56,7 @@ public class UserContollerTests {
 
         config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
         when().
-        post("http://localhost:8081/api/user/create").
+        post("http://localhost:8080/api/user/create").
         then().
         statusCode(200).
         assertThat().
@@ -74,7 +72,7 @@ public class UserContollerTests {
         given().
                 config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
                 when().
-                post("http://localhost:8081/login").then().statusCode(200);
+                post("http://localhost:8080/login").then().statusCode(200);
     }
 
     public String login() {
@@ -85,7 +83,7 @@ public class UserContollerTests {
         Response response = given().
                 config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
                 when().
-                post("http://localhost:8081/login");
+                post("http://localhost:8080/login");
         String authorizationCode = response.headers().get("Authorization").getValue();
         return authorizationCode;
     }
@@ -100,7 +98,7 @@ public class UserContollerTests {
                 pathParam("id", "1").
                 contentType("application/JSON").
                 when().
-                get("http://localhost:8081/api/user/id/{id}").
+                get("http://localhost:8080/api/user/id/{id}").
                 then().
                 statusCode(200).
                 assertThat().
@@ -117,7 +115,7 @@ public class UserContollerTests {
                 pathParam("id", "100").
                 contentType("application/JSON").
                 when().
-                get("http://localhost:8081/api/user/id/{id}").
+                get("http://localhost:8080/api/user/id/{id}").
                 then().
                 statusCode(404);
     }
@@ -132,7 +130,7 @@ public class UserContollerTests {
                 pathParam("username", "test").
                 contentType("application/JSON").
                 when().
-                get("http://localhost:8081/api/user/{username}").
+                get("http://localhost:8080/api/user/{username}").
                 then().
                 statusCode(200).
                 assertThat().
@@ -149,7 +147,7 @@ public class UserContollerTests {
                 pathParam("username", "test1").
                 contentType("application/JSON").
                 when().
-                get("http://localhost:8081/api/user/{username}").
+                get("http://localhost:8080/api/user/{username}").
                 then().
                 statusCode(404);
     }
