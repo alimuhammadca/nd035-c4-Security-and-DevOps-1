@@ -1,109 +1,109 @@
 package com.example.demo.controllers;
 
-import com.example.demo.TestUtils;
-import com.example.demo.model.persistence.Cart;
-import com.example.demo.model.persistence.Item;
-import com.example.demo.model.persistence.User;
-import com.example.demo.model.persistence.repositories.CartRepository;
-import com.example.demo.model.persistence.repositories.ItemRepository;
-import com.example.demo.model.persistence.repositories.UserRepository;
-import com.example.demo.model.requests.ModifyCartRequest;
-import org.junit.Before;
+import io.restassured.RestAssured;
+import io.restassured.http.ContentType;
+import io.restassured.response.Response;
+import org.json.JSONObject;
+import org.junit.BeforeClass;
 import org.junit.Test;
-import org.springframework.http.ResponseEntity;
-import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Optional;
+import java.util.HashMap;
+import java.util.Map;
+import static io.restassured.RestAssured.given;
+import static io.restassured.config.EncoderConfig.encoderConfig;
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
 public class CartControllerTests {
-    private CartController cartController;
-    private UserRepository userRepository = mock(UserRepository.class);
-    private CartRepository cartRepository = mock(CartRepository.class);
-    private ItemRepository itemRepository = mock(ItemRepository.class);
 
-    @Before
-    public void setup() {
-        cartController = new CartController();
-        TestUtils.injectObject(cartController, "userRepository", userRepository);
-        TestUtils.injectObject(cartController, "cartRepository", cartRepository);
-        TestUtils.injectObject(cartController, "itemRepository", itemRepository);
+    @BeforeClass
+    public static void setUp() {
+        Map<String, Object> map = new HashMap();
+        map.put("username", "carttest1");
+        map.put("password", "testPassword");
+        map.put("confirmPassword", "testPassword");
+
+        given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8080/api/user/create").
+                then().
+                statusCode(200);
+
+        map = new HashMap();
+        map.put("username", "carttest2");
+        map.put("password", "testPassword");
+        map.put("confirmPassword", "testPassword");
+
+        given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8080/api/user/create").
+                then().
+                statusCode(200);
+    }
+
+    public String login(String username) {
+        Map<String, Object> map = new HashMap();
+        map.put("username", username);
+        map.put("password", "testPassword");
+
+        Response response = given().
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8080/login");
+        String authorizationCode = response.headers().get("Authorization").getValue();
+        return authorizationCode;
     }
 
     @Test
-    public void testAddToCart() {
-        ModifyCartRequest cartRequest = createCartRequest();
-        final ResponseEntity<Cart> response = cartController.addToCart(cartRequest);
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
-        Cart cart = response.getBody();
-        assertNotNull(cart);
-        assertEquals(10, cart.getItems().size());
+    public void testAddToCart() throws Exception {
+        String code = login("carttest1");
+        Map<String, Object> map = new HashMap();
+        map.put("username", "carttest1");
+        map.put("itemId", 1);
+        map.put("quantity", 5);
+
+        Response response = given().
+                header("Authorization", code).
+                contentType("application/JSON").
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8080/api/cart/addToCart");
+        assertEquals(200, response.getStatusCode());
+        JSONObject jsonObject = new JSONObject(response.getBody().asString());
+        assertEquals(14.95, jsonObject.get("total"));
     }
 
     @Test
-    public void testRemoveFromCart() {
-        ModifyCartRequest cartRequest = createCartRequest();
-        final ResponseEntity<Cart> response = cartController.removeFromCart(cartRequest);
+    public void testRemoveFromCart() throws Exception {
+        String code = login("carttest2");
 
-        assertNotNull(response);
-        assertEquals(200, response.getStatusCodeValue());
+        Map<String, Object> map = new HashMap();
+        map.put("username", "carttest2");
+        map.put("itemId", 1);
+        map.put("quantity", 5);
 
-        Cart cart = response.getBody();
+        Response response = given().
+                header("Authorization", code).
+                contentType("application/JSON").
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8080/api/cart/addToCart");
+        assertEquals(200, response.getStatusCode());
 
-        assertNotNull(cart);
-        assertEquals(0, cart.getItems().size());
-    }
+        map = new HashMap();
+        map.put("username", "carttest2");
+        map.put("itemId", 1);
+        map.put("quantity", 2);
 
-    public ModifyCartRequest createCartRequest() {
-        Cart cart = new Cart();
-        User user = createUser(1l, "test", "testPassword", cart);
-        Item item = createItem(1L, "Round Widget", new BigDecimal("2.99"), "A widget that is round");
-        ModifyCartRequest newCartRequest = createCartRequest(1L, 10, "test");
-        ArrayList<Item> listOfItems = new ArrayList<Item>();
-        listOfItems.add(item);
-        createCart(1l, listOfItems, user);
-
-        when(userRepository.findByUsername("test")).thenReturn(user);
-        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
-        return newCartRequest;
-    }
-
-    public ModifyCartRequest createCartRequest(long itemId, int quantity, String username) {
-        ModifyCartRequest cartRequest = new ModifyCartRequest();
-        cartRequest.setItemId(itemId);
-        cartRequest.setQuantity(quantity);
-        cartRequest.setUsername(username);
-        return cartRequest;
-    }
-
-    public User createUser(long userId, String username, String password, Cart cart) {
-        User user = new User();
-        user.setId(userId);
-        user.setUsername(username);
-        user.setPassword(password);
-        user.setCart(cart);
-        return user;
-    }
-
-    public Item createItem(Long id, String name, BigDecimal price, String description) {
-        Item item = new Item();
-        item.setId(id);
-        item.setName(name);
-        item.setPrice(price);
-        item.setDescription(description);
-        return item;
-    }
-
-    public Cart createCart(long cartId, ArrayList<Item> items, User user) {
-        Cart cart = new Cart();
-        cart.setId(cartId);
-        cart.setItems(items);
-        cart.setUser(user);
-        return cart;
+        response = given().
+                header("Authorization", code).
+                contentType("application/JSON").
+                config(RestAssured.config().encoderConfig(encoderConfig().encodeContentTypeAs("application/JSON", ContentType.JSON))).contentType("application/JSON").body(map).
+                when().
+                post("http://localhost:8080/api/cart/removeFromCart");
+        assertEquals(200, response.getStatusCode());
+        JSONObject jsonObject = new JSONObject(response.getBody().asString());
+        assertEquals(8.97, jsonObject.get("total"));
     }
 
 }

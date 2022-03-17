@@ -17,7 +17,7 @@ public class UserContollerTests {
     @BeforeClass
     public static void setUp() {
         Map<String, Object> map = new HashMap();
-        map.put("username", "test");
+        map.put("username", "usertest");
         map.put("password", "testPassword");
         map.put("confirmPassword", "testPassword");
 
@@ -28,13 +28,13 @@ public class UserContollerTests {
                 then().
                 statusCode(200).
                 assertThat().
-                body("username", is("test")).assertThat().body("id", is(1));
+                body("username", is("usertest")).assertThat().body("id", is(1));
     }
 
     @Test
     public void testCreateUserFailed() {
         Map<String, Object> map = new HashMap();
-        map.put("username", "test1");
+        map.put("username", "usertest1");
         map.put("password", "testPassword");
         map.put("confirmPassword", "testPassword1");
 
@@ -49,7 +49,7 @@ public class UserContollerTests {
     @Test
     public void testCreateUserSuccessfully() {
         Map<String, Object> map = new HashMap();
-        map.put("username", "test2");
+        map.put("username", "usertest2");
         map.put("password", "testPassword");
         map.put("confirmPassword", "testPassword");
         given().
@@ -60,13 +60,13 @@ public class UserContollerTests {
         then().
         statusCode(200).
         assertThat().
-        body("username", is("test2")).assertThat().body("id", is(2));
+        body("username", is("usertest2")).assertThat().body("id", is(2));
     }
 
     @Test
     public void testLoginSuccessfully() {
         Map<String, Object> map = new HashMap();
-        map.put("username", "test");
+        map.put("username", "usertest");
         map.put("password", "testPassword");
 
         given().
@@ -77,7 +77,7 @@ public class UserContollerTests {
 
     public String login() {
         Map<String, Object> map = new HashMap();
-        map.put("username", "test");
+        map.put("username", "usertest");
         map.put("password", "testPassword");
 
         Response response = given().
@@ -102,7 +102,7 @@ public class UserContollerTests {
                 then().
                 statusCode(200).
                 assertThat().
-                body("username", is("test")).assertThat().body("id", is(1));
+                body("username", is("usertest")).assertThat().body("id", is(1));
     }
 
     @Test
@@ -127,14 +127,14 @@ public class UserContollerTests {
 
         given().
                 header("Authorization", code).
-                pathParam("username", "test").
+                pathParam("username", "usertest").
                 contentType("application/JSON").
                 when().
                 get("http://localhost:8080/api/user/{username}").
                 then().
                 statusCode(200).
                 assertThat().
-                body("username", is("test")).assertThat().body("id", is(1));
+                body("username", is("usertest")).assertThat().body("id", is(1));
     }
 
     @Test
@@ -144,7 +144,7 @@ public class UserContollerTests {
 
         given().
                 header("Authorization", code).
-                pathParam("username", "test1").
+                pathParam("username", "usertest1").
                 contentType("application/JSON").
                 when().
                 get("http://localhost:8080/api/user/{username}").
